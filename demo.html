@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anime.js Demo</title>
+    <style>
+        .box {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="box"></div>
+    <script src="lib/anime.min.js"></script>
+    <script>
+        // Simple animation example
+        anime({
+            targets: '.box',
+            translateX: 250,
+            rotate: '1turn',
+            duration: 800,
+            easing: 'easeInOutQuad',
+            direction: 'alternate',
+            loop: true
+        });
+    </script>
+</body>
+</html> 
