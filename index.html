@@ -189,20 +189,9 @@
             color: #ffffff40;
         }
 
-        .prompt-box::after {
-            content: '';
-            position: absolute;
-            right: 1.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 2px;
-            height: 1.2em;
-            background: white;
-            animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-            50% { opacity: 0; }
+        /* Remove cursor-related styles */
+        .prompt-box.typing {
+            /* Empty to remove typing-specific styles */
         }
 
         .results-section {
@@ -692,6 +681,42 @@
         let promptInterval = null;
         let currentAnimation = null;
         let isAnimating = false;
+        let isTyping = false;
+
+        // Function to simulate typing
+        async function typeText(input, text) {
+            const promptBox = input.closest('.prompt-box');
+            promptBox.classList.add('typing');
+            input.value = '';
+            isTyping = true;
+
+            for (let i = 0; i < text.length; i++) {
+                if (!isTyping) break;
+                input.value = text.substring(0, i + 1);
+                await new Promise(resolve => setTimeout(resolve, 15));
+            }
+
+            return new Promise(resolve => {
+                if (isTyping) {
+                    setTimeout(() => {
+                        deleteText(input);
+                        resolve();
+                    }, 10000);
+                } else {
+                    resolve();
+                }
+            });
+        }
+
+        // Function to delete text
+        async function deleteText(input) {
+            if (!isTyping) return;
+
+            while (input.value.length > 0 && isTyping) {
+                input.value = input.value.substring(0, input.value.length - 1);
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+        }
 
         // Initialize the animation system
         function initializeAnimationSystem() {
@@ -708,7 +733,9 @@
 
             // Handle input focus
             input.addEventListener('focus', () => {
+                isTyping = false;
                 stopAnimationCycle();
+                input.closest('.prompt-box').classList.remove('typing');
             });
 
             // Handle input blur
@@ -743,8 +770,14 @@
             const input = document.getElementById('animationInput');
             const card = document.querySelector('.result-card');
 
-            // Update input text
-            input.value = text;
+            // If not manually typing, simulate typing
+            if (isTyping) {
+                typeText(input, text).then(() => {
+                    if (isTyping) {
+                        cycleToNextAnimation();
+                    }
+                });
+            }
 
             // Fade out existing content
             anime({
@@ -786,6 +819,108 @@
                 }
             });
         }
+
+        // Function to cycle to next animation
+        function cycleToNextAnimation() {
+            currentPromptIndex = (currentPromptIndex + 1) % examplePrompts.length;
+            showAnimation(examplePrompts[currentPromptIndex]);
+        }
+
+        // Function to cycle through animations
+        function cycleAnimation() {
+            isTyping = true;
+            showAnimation(examplePrompts[currentPromptIndex]);
+            promptInterval = setInterval(() => {
+                if (isTyping) {
+                    cycleToNextAnimation();
+                }
+            }, 12000);
+        }
+
+        // Stop animation cycling
+        function stopAnimationCycle() {
+            isTyping = false;
+            if (promptInterval) {
+                clearInterval(promptInterval);
+                promptInterval = null;
+            }
+            if (currentAnimation) {
+                currentAnimation.pause();
+                currentAnimation = null;
+            }
+        }
+
+        // Initialize the system when the page loads
+        initializeAnimationSystem();
+
+        // Add showcase animations
+        function createDots(container, count) {
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                container.appendChild(dot);
+            }
+        }
+
+        // Create dots for each showcase item
+        document.querySelectorAll('.showcase-dots').forEach(container => {
+            createDots(container, 100);
+        });
+
+        // Showcase item 1: Wave effect
+        anime({
+            targets: '.showcase-item:nth-child(1) .dot',
+            scale: [
+                { value: 1.5, duration: 400, easing: 'easeOutSine' },
+                { value: 1, duration: 400, easing: 'easeInOutQuad' }
+            ],
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true
+        });
+
+        // Showcase item 2: Rotation matrix
+        anime({
+            targets: '.showcase-item:nth-child(2) .dot',
+            rotate: [
+                { value: 180, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 360, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            scale: [
+                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true
+        });
+
+        // Showcase item 3: Random movement
+        anime({
+            targets: '.showcase-item:nth-child(3) .dot',
+            translateX: () => anime.random(-10, 10),
+            translateY: () => anime.random(-10, 10),
+            scale: () => anime.random(0.8, 1.4),
+            easing: 'easeInOutQuad',
+            duration: 1000,
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true,
+            direction: 'alternate'
+        });
+
+        // Showcase item 4: Spiral effect
+        anime({
+            targets: '.showcase-item:nth-child(4) .dot',
+            rotateZ: [0, 360],
+            scale: [
+                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            translateX: () => anime.random(-15, 15),
+            translateY: () => anime.random(-15, 15),
+            delay: anime.stagger(80, { grid: [10, 10], from: 'center' }),
+            duration: 2000,
+            loop: true,
+            direction: 'alternate'
+        });
 
         // Start animation based on text
         function startCardAnimation(element, text) {
@@ -872,99 +1007,6 @@
                 }
             });
         }
-
-        // Function to cycle through animations
-        function cycleAnimation() {
-            showAnimation(examplePrompts[currentPromptIndex]);
-            promptInterval = setInterval(() => {
-                currentPromptIndex = (currentPromptIndex + 1) % examplePrompts.length;
-                showAnimation(examplePrompts[currentPromptIndex]);
-            }, 5000);
-        }
-
-        // Stop animation cycling
-        function stopAnimationCycle() {
-            if (promptInterval) {
-                clearInterval(promptInterval);
-                promptInterval = null;
-            }
-            if (currentAnimation) {
-                currentAnimation.pause();
-                currentAnimation = null;
-            }
-        }
-
-        // Initialize the system when the page loads
-        initializeAnimationSystem();
-
-        // Add showcase animations
-        function createDots(container, count) {
-            for (let i = 0; i < count; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                container.appendChild(dot);
-            }
-        }
-
-        // Create dots for each showcase item
-        document.querySelectorAll('.showcase-dots').forEach(container => {
-            createDots(container, 100);
-        });
-
-        // Showcase item 1: Wave effect
-        anime({
-            targets: '.showcase-item:nth-child(1) .dot',
-            scale: [
-                { value: 1.5, duration: 400, easing: 'easeOutSine' },
-                { value: 1, duration: 400, easing: 'easeInOutQuad' }
-            ],
-            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
-            loop: true
-        });
-
-        // Showcase item 2: Rotation matrix
-        anime({
-            targets: '.showcase-item:nth-child(2) .dot',
-            rotate: [
-                { value: 180, duration: 1000, easing: 'easeInOutQuad' },
-                { value: 360, duration: 1000, easing: 'easeInOutQuad' }
-            ],
-            scale: [
-                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
-                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
-            ],
-            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
-            loop: true
-        });
-
-        // Showcase item 3: Random movement
-        anime({
-            targets: '.showcase-item:nth-child(3) .dot',
-            translateX: () => anime.random(-10, 10),
-            translateY: () => anime.random(-10, 10),
-            scale: () => anime.random(0.8, 1.4),
-            easing: 'easeInOutQuad',
-            duration: 1000,
-            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
-            loop: true,
-            direction: 'alternate'
-        });
-
-        // Showcase item 4: Spiral effect
-        anime({
-            targets: '.showcase-item:nth-child(4) .dot',
-            rotateZ: [0, 360],
-            scale: [
-                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
-                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
-            ],
-            translateX: () => anime.random(-15, 15),
-            translateY: () => anime.random(-15, 15),
-            delay: anime.stagger(80, { grid: [10, 10], from: 'center' }),
-            duration: 2000,
-            loop: true,
-            direction: 'alternate'
-        });
     </script>
 </body>
 </html> 
