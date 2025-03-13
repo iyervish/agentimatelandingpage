@@ -173,6 +173,7 @@
             margin: 0 auto;
             margin-bottom: 2rem;
             position: relative;
+            overflow: hidden;
         }
 
         .prompt-box input {
@@ -189,16 +190,13 @@
             color: #ffffff40;
         }
 
-        /* Remove cursor-related styles */
-        .prompt-box.typing {
-            /* Empty to remove typing-specific styles */
+        .prompt-box.typing input {
+            animation: blink-caret 1s step-end infinite;
         }
 
-        .results-section {
-            margin-top: 4rem;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 2rem;
+        @keyframes blink-caret {
+            from, to { border-right: 2px solid transparent; }
+            50% { border-right: 2px solid #ffffff80; }
         }
 
         .result-card {
@@ -208,25 +206,12 @@
             text-align: left;
             opacity: 0;
             transform: translateY(20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
         }
 
-        .result-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-
-        .animation-preview {
-            width: 100%;
-            height: 300px;
-            border-radius: 8px;
-            background: transparent;
-            margin-bottom: 1rem;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .result-card.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .preview-card {
@@ -239,10 +224,12 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-out;
+            will-change: transform;
         }
 
-        .preview-card::before {
-            display: none;
+        .preview-card.animating {
+            transition: all 0.3s ease-out;
         }
 
         .card-header {
@@ -677,181 +664,247 @@
             "Make the card wave gently"
         ];
 
-        let currentPromptIndex = 0;
-        let promptInterval = null;
-        let currentAnimation = null;
-        let isAnimating = false;
-        let isTyping = false;
+        class AnimationController {
+            constructor() {
+                this.currentPromptIndex = 0;
+                this.isTyping = false;
+                this.currentAnimation = null;
+                this.typingSpeed = 50; // ms per character
+                this.displayDuration = 3000; // ms to display completed text
+                this.cycleInterval = null;
 
-        // Function to simulate typing
-        async function typeText(input, text) {
-            const promptBox = input.closest('.prompt-box');
-            promptBox.classList.add('typing');
-            input.value = '';
-            isTyping = true;
-
-            for (let i = 0; i < text.length; i++) {
-                if (!isTyping) break;
-                input.value = text.substring(0, i + 1);
-                await new Promise(resolve => setTimeout(resolve, 15));
+                this.input = document.getElementById('animationInput');
+                this.promptBox = this.input.closest('.prompt-box');
+                this.resultsSection = document.getElementById('resultsSection');
+                
+                this.initializeUI();
+                this.setupEventListeners();
+                this.startCycling();
             }
 
-            return new Promise(resolve => {
-                if (isTyping) {
-                    setTimeout(() => {
-                        deleteText(input);
-                        resolve();
-                    }, 10000);
-                } else {
-                    resolve();
+            initializeUI() {
+                // Create the result card if it doesn't exist
+                if (!this.resultsSection.querySelector('.result-card')) {
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    card.innerHTML = this.getCardHTML();
+                    this.resultsSection.appendChild(card);
                 }
-            });
-        }
-
-        // Function to delete text
-        async function deleteText(input) {
-            if (!isTyping) return;
-
-            while (input.value.length > 0 && isTyping) {
-                input.value = input.value.substring(0, input.value.length - 1);
-                await new Promise(resolve => setTimeout(resolve, 10));
             }
-        }
 
-        // Initialize the animation system
-        function initializeAnimationSystem() {
-            const input = document.getElementById('animationInput');
-            
-            // Create initial card
-            const resultsSection = document.getElementById('resultsSection');
-            const card = document.createElement('div');
-            card.className = 'result-card';
-            resultsSection.appendChild(card);
-            
-            // Start with first example
-            cycleAnimation();
+            getCardHTML() {
+                return `
+                    <div class="animation-preview">
+                        <div class="preview-card">
+                            <div class="card-header">
+                                <div class="card-icon"></div>
+                                <div class="card-title">Preview Card</div>
+                            </div>
+                            <div class="card-content">
+                                This is a sample card component that will animate based on your input.
+                            </div>
+                            <div class="card-footer">
+                                <span>Card ID: #1234</span>
+                                <span>Status: Active</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
-            // Handle input focus
-            input.addEventListener('focus', () => {
-                isTyping = false;
-                stopAnimationCycle();
-                input.closest('.prompt-box').classList.remove('typing');
-            });
+            setupEventListeners() {
+                this.input.addEventListener('focus', () => this.handleFocus());
+                this.input.addEventListener('blur', (e) => this.handleBlur(e));
+                this.input.addEventListener('input', (e) => this.handleInput(e));
+            }
 
-            // Handle input blur
-            input.addEventListener('blur', (e) => {
+            handleFocus() {
+                this.stopCycling();
+                this.promptBox.classList.remove('typing');
+            }
+
+            handleBlur(e) {
                 if (!e.target.value.trim()) {
-                    cycleAnimation();
-                }
-            });
-
-            // Handle manual input
-            let inputDebounce;
-            input.addEventListener('input', (e) => {
-                clearTimeout(inputDebounce);
-                inputDebounce = setTimeout(() => {
-                    const text = e.target.value.trim();
-                    if (text) {
-                        showAnimation(text);
-                    }
-                }, 300);
-            });
-        }
-
-        // Show animation for given text
-        function showAnimation(text) {
-            if (isAnimating) {
-                if (currentAnimation) {
-                    currentAnimation.pause();
-                    currentAnimation = null;
+                    this.startCycling();
                 }
             }
 
-            const input = document.getElementById('animationInput');
-            const card = document.querySelector('.result-card');
+            handleInput(e) {
+                const text = e.target.value.trim();
+                if (text) {
+                    this.showAnimation(text, false);
+                }
+            }
 
-            // If not manually typing, simulate typing
-            if (isTyping) {
-                typeText(input, text).then(() => {
-                    if (isTyping) {
-                        cycleToNextAnimation();
+            async typeText(text) {
+                this.input.value = '';
+                this.promptBox.classList.add('typing');
+                
+                // Type each character with CSS transition
+                for (let i = 0; i <= text.length; i++) {
+                    if (!this.isTyping) break;
+                    this.input.value = text.substring(0, i);
+                    await new Promise(resolve => setTimeout(resolve, this.typingSpeed));
+                }
+
+                // Keep text visible for display duration
+                if (this.isTyping) {
+                    await new Promise(resolve => setTimeout(resolve, this.displayDuration));
+                }
+
+                // Delete text if still typing
+                if (this.isTyping) {
+                    await this.deleteText();
+                }
+            }
+
+            async deleteText() {
+                while (this.input.value.length > 0 && this.isTyping) {
+                    this.input.value = this.input.value.slice(0, -1);
+                    await new Promise(resolve => setTimeout(resolve, this.typingSpeed / 2));
+                }
+            }
+
+            showAnimation(text, isAuto = true) {
+                // Stop current animation if any
+                if (this.currentAnimation) {
+                    this.currentAnimation.pause();
+                    this.currentAnimation = null;
+                }
+
+                const card = this.resultsSection.querySelector('.result-card');
+                const previewCard = card.querySelector('.preview-card');
+
+                // Show the card with transition
+                card.classList.add('visible');
+
+                // Start new animation
+                this.startCardAnimation(previewCard, text);
+
+                // If auto-cycling, handle typing animation
+                if (isAuto) {
+                    this.typeText(text);
+                }
+            }
+
+            startCardAnimation(element, text) {
+                const type = text.toLowerCase();
+                let animation = this.getAnimationConfig(type);
+
+                // Add animating class for smooth transitions
+                element.classList.add('animating');
+
+                // Create new animation
+                this.currentAnimation = anime({
+                    targets: element,
+                    ...animation,
+                    begin: () => {
+                        element.style.willChange = 'transform, opacity';
+                    },
+                    complete: () => {
+                        element.style.willChange = 'auto';
                     }
                 });
             }
 
-            // Fade out existing content
-            anime({
-                targets: card,
-                opacity: [1, 0],
-                duration: 300,
-                easing: 'easeOutQuad',
-                complete: () => {
-                    // Update card content
-                    card.innerHTML = `
-                        <div class="animation-preview">
-                            <div class="preview-card">
-                                <div class="card-header">
-                                    <div class="card-icon"></div>
-                                    <div class="card-title">Preview Card</div>
-                                </div>
-                                <div class="card-content">
-                                    This is a sample card component that will animate based on your input.
-                                </div>
-                                <div class="card-footer">
-                                    <span>Card ID: #1234</span>
-                                    <span>Status: Active</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    // Fade in new content and start animation
-                    const previewCard = card.querySelector('.preview-card');
-                    anime({
-                        targets: card,
-                        opacity: [0, 1],
-                        duration: 300,
-                        easing: 'easeInQuad',
-                        complete: () => {
-                            startCardAnimation(previewCard, text);
-                        }
-                    });
+            getAnimationConfig(type) {
+                if (type.includes('bounce')) {
+                    return {
+                        translateY: [0, -30],
+                        duration: 1200,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'spring(1, 80, 10, 0)'
+                    };
+                } else if (type.includes('fade')) {
+                    return {
+                        opacity: [1, 0.3],
+                        duration: 1500,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    };
+                } else if (type.includes('slide')) {
+                    return {
+                        translateX: [-50, 50],
+                        duration: 2000,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    };
+                } else if (type.includes('rotate')) {
+                    return {
+                        rotate: [0, 360],
+                        duration: 2000,
+                        loop: true,
+                        easing: 'easeInOutQuad'
+                    };
+                } else if (type.includes('shake')) {
+                    return {
+                        translateX: [-5, 5],
+                        duration: 100,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'linear'
+                    };
+                } else if (type.includes('pulse')) {
+                    return {
+                        scale: [1, 1.05],
+                        duration: 800,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    };
+                } else if (type.includes('wave') || type.includes('float')) {
+                    return {
+                        translateY: [-10, 10],
+                        translateX: [-5, 5],
+                        rotate: [-5, 5],
+                        duration: 2000,
+                        loop: true,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    };
                 }
-            });
-        }
+                
+                return {
+                    scale: [0.95, 1],
+                    translateY: [-5, 5],
+                    duration: 1600,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            }
 
-        // Function to cycle to next animation
-        function cycleToNextAnimation() {
-            currentPromptIndex = (currentPromptIndex + 1) % examplePrompts.length;
-            showAnimation(examplePrompts[currentPromptIndex]);
-        }
+            startCycling() {
+                this.isTyping = true;
+                this.showAnimation(examplePrompts[this.currentPromptIndex], true);
+                
+                this.cycleInterval = setInterval(() => {
+                    if (this.isTyping) {
+                        this.currentPromptIndex = (this.currentPromptIndex + 1) % examplePrompts.length;
+                        this.showAnimation(examplePrompts[this.currentPromptIndex], true);
+                    }
+                }, 6000);
+            }
 
-        // Function to cycle through animations
-        function cycleAnimation() {
-            isTyping = true;
-            showAnimation(examplePrompts[currentPromptIndex]);
-            promptInterval = setInterval(() => {
-                if (isTyping) {
-                    cycleToNextAnimation();
+            stopCycling() {
+                this.isTyping = false;
+                if (this.cycleInterval) {
+                    clearInterval(this.cycleInterval);
+                    this.cycleInterval = null;
                 }
-            }, 12000);
-        }
-
-        // Stop animation cycling
-        function stopAnimationCycle() {
-            isTyping = false;
-            if (promptInterval) {
-                clearInterval(promptInterval);
-                promptInterval = null;
-            }
-            if (currentAnimation) {
-                currentAnimation.pause();
-                currentAnimation = null;
+                if (this.currentAnimation) {
+                    this.currentAnimation.pause();
+                    this.currentAnimation = null;
+                }
+                this.promptBox.classList.remove('typing');
             }
         }
 
-        // Initialize the system when the page loads
-        initializeAnimationSystem();
+        // Initialize the animation system
+        const animationController = new AnimationController();
 
         // Add showcase animations
         function createDots(container, count) {
@@ -921,92 +974,7 @@
             loop: true,
             direction: 'alternate'
         });
-
-        // Start animation based on text
-        function startCardAnimation(element, text) {
-            const type = text.toLowerCase();
-            let animation;
-
-            if (type.includes('bounce')) {
-                animation = {
-                    translateY: [0, -30],
-                    duration: 1200,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'spring(1, 80, 10, 0)'
-                };
-            } else if (type.includes('fade')) {
-                animation = {
-                    opacity: [1, 0.3],
-                    duration: 1500,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                };
-            } else if (type.includes('slide')) {
-                animation = {
-                    translateX: [-50, 50],
-                    duration: 2000,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                };
-            } else if (type.includes('rotate')) {
-                animation = {
-                    rotate: [0, 360],
-                    duration: 2000,
-                    loop: true,
-                    easing: 'easeInOutQuad'
-                };
-            } else if (type.includes('shake')) {
-                animation = {
-                    translateX: [-5, 5],
-                    duration: 100,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'linear'
-                };
-            } else if (type.includes('pulse')) {
-                animation = {
-                    scale: [1, 1.05],
-                    duration: 800,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                };
-            } else if (type.includes('wave') || type.includes('float')) {
-                animation = {
-                    translateY: [-10, 10],
-                    translateX: [-5, 5],
-                    rotate: [-5, 5],
-                    duration: 2000,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                };
-            } else {
-                animation = {
-                    scale: [0.95, 1],
-                    translateY: [-5, 5],
-                    duration: 1600,
-                    loop: true,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                };
-            }
-
-            isAnimating = true;
-            currentAnimation = anime({
-                targets: element,
-                ...animation,
-                begin: () => {
-                    isAnimating = true;
-                },
-                complete: () => {
-                    isAnimating = false;
-                }
-            });
-        }
     </script>
 </body>
+</html> 
 </html> 
