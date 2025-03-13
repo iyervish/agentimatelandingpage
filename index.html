@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agentimate - Idea to design in seconds</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #0a0a0a, #1a1a1a);
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+            background: linear-gradient(45deg, rgba(255,107,107,0.05) 0%, rgba(78,205,196,0.05) 100%);
+        }
+
+        .background-shape {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+        }
+
+        .shape-1 {
+            width: 400px;
+            height: 400px;
+            top: 5%;
+            left: -100px;
+            border-color: rgba(255, 107, 107, 0.15);
+            background: radial-gradient(circle at center, rgba(255, 107, 107, 0.05) 0%, transparent 70%);
+        }
+
+        .shape-2 {
+            width: 300px;
+            height: 300px;
+            bottom: -50px;
+            right: -50px;
+            border-color: rgba(78, 205, 196, 0.15);
+            background: radial-gradient(circle at center, rgba(78, 205, 196, 0.05) 0%, transparent 70%);
+        }
+
+        .shape-3 {
+            width: 250px;
+            height: 250px;
+            top: 40%;
+            right: 15%;
+            border-color: rgba(255, 255, 255, 0.15);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+        }
+
+        .shape-4 {
+            width: 200px;
+            height: 200px;
+            top: 20%;
+            left: 25%;
+            border-color: rgba(255, 107, 107, 0.1);
+            background: radial-gradient(circle at center, rgba(255, 107, 107, 0.03) 0%, transparent 70%);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-heart {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border-radius: 50%;
+            position: relative;
+            transform: rotate(45deg);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #ffffff80;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1px solid #ffffff40;
+        }
+
+        .btn-primary {
+            background: white;
+            color: black;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .floating-heart {
+            width: 120px;
+            height: 120px;
+            margin: 2rem auto;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 2rem 0;
+            background: linear-gradient(45deg, #fff, #ffffff90);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #ffffff80;
+            margin-bottom: 3rem;
+        }
+
+        .prompt-box {
+            background: #ffffff0f;
+            border-radius: 12px;
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .prompt-box input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            outline: none;
+            padding: 0.5rem;
+        }
+
+        .prompt-box input::placeholder {
+            color: #ffffff40;
+        }
+
+        .prompt-box::after {
+            content: '';
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 1.2em;
+            background: white;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .results-section {
+            margin-top: 4rem;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .result-card {
+            background: transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .result-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .animation-preview {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            background: transparent;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .preview-card {
+            width: 280px;
+            height: 180px;
+            background: #ffffff0f;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-card::before {
+            display: none;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            background: transparent;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .card-content {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        .card-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .animation-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #ffffff80;
+        }
+
+        .animation-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .animation-actions button {
+            background: #ffffff1a;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: #ffffff80;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Features section styles */
+        .features-section {
+            margin-top: 8rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 4rem;
+            padding: 0 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: #ffffff0f;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #FF6B6B20, #4ECDC420);
+            opacity: 0.5;
+        }
+
+        .feature-icon svg {
+            width: 32px;
+            height: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .feature-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #ffffff80;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* Showcase section styles */
+        .showcase-section {
+            margin-top: 8rem;
+            padding: 4rem 2rem;
+            background: #ffffff05;
+            border-top: 1px solid #ffffff10;
+            border-bottom: 1px solid #ffffff10;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .showcase-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+            background: linear-gradient(45deg, #fff, #ffffff90);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .showcase-item {
+            aspect-ratio: 1;
+            background: #ffffff0f;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .showcase-item::before {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            background: linear-gradient(45deg, #ffffff08, #ffffff02);
+            border-radius: 15px;
+            z-index: 0;
+        }
+
+        .showcase-dots {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            padding: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: currentColor;
+            border-radius: 50%;
+            color: #FF6B6B;
+        }
+
+        .showcase-item:nth-child(2) .dot {
+            color: #4ECDC4;
+            border-radius: 2px;
+        }
+
+        .showcase-item:nth-child(3) .dot {
+            color: #ffffff;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+
+        .showcase-item:nth-child(4) .dot {
+            color: #FF6B6B;
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="background-shape shape-1"></div>
+        <div class="background-shape shape-2"></div>
+        <div class="background-shape shape-3"></div>
+        <div class="background-shape shape-4"></div>
+    </div>
+
+    <nav>
+        <div class="logo">
+            <div class="logo-heart"></div>
+            Agentimate
+        </div>
+        <div class="nav-links">
+            <a href="#">Support</a>
+            <a href="#">Launched</a>
+            <a href="#">Learn</a>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-outline">Sign in</button>
+            <button class="btn btn-primary">Sign up</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="floating-heart"></div>
+        <h1>Idea to design in seconds.</h1>
+        <p class="subtitle">Agentimate is your superhuman design assistant.</p>
+
+        <div class="prompt-box">
+            <input type="text" id="animationInput" placeholder="Describe your animation idea..." autocomplete="off">
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <!-- Single animation result will be shown here -->
+        </div>
+
+        <div class="features-section">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Instant & intuitive</h3>
+                <p class="feature-description">
+                    Type your animation idea and see it come to life instantly. Our AI understands natural language and creates smooth, professional animations in real-time.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Beautiful design</h3>
+                <p class="feature-description">
+                    Every animation follows modern design principles. From subtle transitions to eye-catching effects, each movement is crafted for visual appeal.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 7h-7m7 10h-7M7 7h-3m3 10h-3M8 5v14"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Customizable control</h3>
+                <p class="feature-description">
+                    Fine-tune your animations with simple language. Adjust speed, style, and intensity just by describing what you want to see.
+                </p>
+            </div>
+        </div>
+
+        <div class="showcase-section">
+            <h2 class="showcase-title">Animation Showcase</h2>
+            <div class="showcase-grid">
+                <div class="showcase-item">
+                    <div class="showcase-dots"></div>
+                </div>
+                <div class="showcase-item">
+                    <div class="showcase-dots"></div>
+                </div>
+                <div class="showcase-item">
+                    <div class="showcase-dots"></div>
+                </div>
+                <div class="showcase-item">
+                    <div class="showcase-dots"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="lib/anime.min.js"></script>
+    <script>
+        // Floating heart animation
+        anime({
+            targets: '.floating-heart',
+            translateY: [-15, 15],
+            scale: [1, 1.05],
+            duration: 2000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+
+        // Logo heart animation
+        anime({
+            targets: '.logo-heart',
+            scale: [1, 1.1],
+            duration: 1000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+
+        // Button hover animations
+        document.querySelectorAll('.btn, .example-btn').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                anime({
+                    targets: button,
+                    scale: 1.05,
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            });
+
+            button.addEventListener('mouseleave', () => {
+                anime({
+                    targets: button,
+                    scale: 1,
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            });
+        });
+
+        // Text fade-in animation on load
+        anime({
+            targets: ['h1', '.subtitle', '.prompt-box', '.examples'],
+            opacity: [0, 1],
+            translateY: [20, 0],
+            delay: anime.stagger(200),
+            duration: 800,
+            easing: 'easeOutQuad'
+        });
+
+        // Background shapes animation
+        anime({
+            targets: '.shape-1',
+            translateX: [-50, 50],
+            translateY: [-30, 30],
+            rotate: [0, 360],
+            duration: 30000,
+            loop: true,
+            direction: 'alternate',
+            easing: 'easeInOutQuad'
+        });
+
+        anime({
+            targets: '.shape-2',
+            translateX: [30, -30],
+            translateY: [-40, 40],
+            rotate: [360, 0],
+            duration: 35000,
+            loop: true,
+            direction: 'alternate',
+            easing: 'easeInOutQuad'
+        });
+
+        anime({
+            targets: '.shape-3',
+            translateX: [-25, 25],
+            translateY: [25, -25],
+            rotate: [0, -360],
+            duration: 32000,
+            loop: true,
+            direction: 'alternate',
+            easing: 'easeInOutQuad'
+        });
+
+        anime({
+            targets: '.shape-4',
+            translateX: [20, -20],
+            translateY: [-20, 20],
+            rotate: [-180, 180],
+            duration: 28000,
+            loop: true,
+            direction: 'alternate',
+            easing: 'easeInOutQuad'
+        });
+
+        // Enhanced gradient movement
+        anime({
+            targets: '.background-animation',
+            background: [
+                'linear-gradient(45deg, rgba(255,107,107,0.05) 0%, rgba(78,205,196,0.05) 100%)',
+                'linear-gradient(225deg, rgba(255,107,107,0.05) 0%, rgba(78,205,196,0.05) 100%)',
+                'linear-gradient(135deg, rgba(255,107,107,0.05) 0%, rgba(78,205,196,0.05) 100%)'
+            ],
+            duration: 20000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+
+        // Example prompts for auto-cycling
+        const examplePrompts = [
+            "Make a card bounce up and down",
+            "Fade the card in and out",
+            "Slide the card from left to right",
+            "Rotate the card in a circle",
+            "Make the card pulse and glow",
+            "Shake the card vigorously",
+            "Float the card like a feather",
+            "Make the card wave gently"
+        ];
+
+        let currentPromptIndex = 0;
+        let promptInterval = null;
+        let currentAnimation = null;
+        let isAnimating = false;
+
+        // Initialize the animation system
+        function initializeAnimationSystem() {
+            const input = document.getElementById('animationInput');
+            
+            // Create initial card
+            const resultsSection = document.getElementById('resultsSection');
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            resultsSection.appendChild(card);
+            
+            // Start with first example
+            cycleAnimation();
+
+            // Handle input focus
+            input.addEventListener('focus', () => {
+                stopAnimationCycle();
+            });
+
+            // Handle input blur
+            input.addEventListener('blur', (e) => {
+                if (!e.target.value.trim()) {
+                    cycleAnimation();
+                }
+            });
+
+            // Handle manual input
+            let inputDebounce;
+            input.addEventListener('input', (e) => {
+                clearTimeout(inputDebounce);
+                inputDebounce = setTimeout(() => {
+                    const text = e.target.value.trim();
+                    if (text) {
+                        showAnimation(text);
+                    }
+                }, 300);
+            });
+        }
+
+        // Show animation for given text
+        function showAnimation(text) {
+            if (isAnimating) {
+                if (currentAnimation) {
+                    currentAnimation.pause();
+                    currentAnimation = null;
+                }
+            }
+
+            const input = document.getElementById('animationInput');
+            const card = document.querySelector('.result-card');
+
+            // Update input text
+            input.value = text;
+
+            // Fade out existing content
+            anime({
+                targets: card,
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: () => {
+                    // Update card content
+                    card.innerHTML = `
+                        <div class="animation-preview">
+                            <div class="preview-card">
+                                <div class="card-header">
+                                    <div class="card-icon"></div>
+                                    <div class="card-title">Preview Card</div>
+                                </div>
+                                <div class="card-content">
+                                    This is a sample card component that will animate based on your input.
+                                </div>
+                                <div class="card-footer">
+                                    <span>Card ID: #1234</span>
+                                    <span>Status: Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Fade in new content and start animation
+                    const previewCard = card.querySelector('.preview-card');
+                    anime({
+                        targets: card,
+                        opacity: [0, 1],
+                        duration: 300,
+                        easing: 'easeInQuad',
+                        complete: () => {
+                            startCardAnimation(previewCard, text);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Start animation based on text
+        function startCardAnimation(element, text) {
+            const type = text.toLowerCase();
+            let animation;
+
+            if (type.includes('bounce')) {
+                animation = {
+                    translateY: [0, -30],
+                    duration: 1200,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'spring(1, 80, 10, 0)'
+                };
+            } else if (type.includes('fade')) {
+                animation = {
+                    opacity: [1, 0.3],
+                    duration: 1500,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            } else if (type.includes('slide')) {
+                animation = {
+                    translateX: [-50, 50],
+                    duration: 2000,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            } else if (type.includes('rotate')) {
+                animation = {
+                    rotate: [0, 360],
+                    duration: 2000,
+                    loop: true,
+                    easing: 'easeInOutQuad'
+                };
+            } else if (type.includes('shake')) {
+                animation = {
+                    translateX: [-5, 5],
+                    duration: 100,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'linear'
+                };
+            } else if (type.includes('pulse')) {
+                animation = {
+                    scale: [1, 1.05],
+                    duration: 800,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            } else if (type.includes('wave') || type.includes('float')) {
+                animation = {
+                    translateY: [-10, 10],
+                    translateX: [-5, 5],
+                    rotate: [-5, 5],
+                    duration: 2000,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            } else {
+                animation = {
+                    scale: [0.95, 1],
+                    translateY: [-5, 5],
+                    duration: 1600,
+                    loop: true,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                };
+            }
+
+            isAnimating = true;
+            currentAnimation = anime({
+                targets: element,
+                ...animation,
+                begin: () => {
+                    isAnimating = true;
+                },
+                complete: () => {
+                    isAnimating = false;
+                }
+            });
+        }
+
+        // Function to cycle through animations
+        function cycleAnimation() {
+            showAnimation(examplePrompts[currentPromptIndex]);
+            promptInterval = setInterval(() => {
+                currentPromptIndex = (currentPromptIndex + 1) % examplePrompts.length;
+                showAnimation(examplePrompts[currentPromptIndex]);
+            }, 5000);
+        }
+
+        // Stop animation cycling
+        function stopAnimationCycle() {
+            if (promptInterval) {
+                clearInterval(promptInterval);
+                promptInterval = null;
+            }
+            if (currentAnimation) {
+                currentAnimation.pause();
+                currentAnimation = null;
+            }
+        }
+
+        // Initialize the system when the page loads
+        initializeAnimationSystem();
+
+        // Add showcase animations
+        function createDots(container, count) {
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                container.appendChild(dot);
+            }
+        }
+
+        // Create dots for each showcase item
+        document.querySelectorAll('.showcase-dots').forEach(container => {
+            createDots(container, 100);
+        });
+
+        // Showcase item 1: Wave effect
+        anime({
+            targets: '.showcase-item:nth-child(1) .dot',
+            scale: [
+                { value: 1.5, duration: 400, easing: 'easeOutSine' },
+                { value: 1, duration: 400, easing: 'easeInOutQuad' }
+            ],
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true
+        });
+
+        // Showcase item 2: Rotation matrix
+        anime({
+            targets: '.showcase-item:nth-child(2) .dot',
+            rotate: [
+                { value: 180, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 360, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            scale: [
+                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true
+        });
+
+        // Showcase item 3: Random movement
+        anime({
+            targets: '.showcase-item:nth-child(3) .dot',
+            translateX: () => anime.random(-10, 10),
+            translateY: () => anime.random(-10, 10),
+            scale: () => anime.random(0.8, 1.4),
+            easing: 'easeInOutQuad',
+            duration: 1000,
+            delay: anime.stagger(100, { grid: [10, 10], from: 'center' }),
+            loop: true,
+            direction: 'alternate'
+        });
+
+        // Showcase item 4: Spiral effect
+        anime({
+            targets: '.showcase-item:nth-child(4) .dot',
+            rotateZ: [0, 360],
+            scale: [
+                { value: 1.4, duration: 1000, easing: 'easeInOutQuad' },
+                { value: 1, duration: 1000, easing: 'easeInOutQuad' }
+            ],
+            translateX: () => anime.random(-15, 15),
+            translateY: () => anime.random(-15, 15),
+            delay: anime.stagger(80, { grid: [10, 10], from: 'center' }),
+            duration: 2000,
+            loop: true,
+            direction: 'alternate'
+        });
+    </script>
+</body>
+</html> 
