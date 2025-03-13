@@ -186,6 +186,8 @@
             padding: 0.5rem;
             caret-color: transparent;
             cursor: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .prompt-box input::placeholder {
@@ -193,12 +195,12 @@
         }
 
         .prompt-box.typing input {
-            animation: blink-caret 1s step-end infinite;
+            border-right: none;
         }
 
         @keyframes blink-caret {
-            from, to { border-right: 2px solid transparent; }
-            50% { border-right: 2px solid #ffffff80; }
+            from, to { border-right: none; }
+            50% { border-right: none; }
         }
 
         .result-card {
